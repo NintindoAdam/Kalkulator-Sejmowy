@@ -350,6 +350,39 @@
     height: auto;
   }
 
+  .majority-controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: center;
+    margin: -4px 0 18px;
+    padding: 0 6px;
+  }
+
+  .majority-btn {
+    border: 1px solid var(--border);
+    background: var(--card);
+    color: var(--text-secondary);
+    border-radius: 999px;
+    padding: 6px 10px;
+    font-size: 11px;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .majority-btn:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+
+  .majority-btn.active {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+  }
+
   .show-results-btn {
     width: 100%;
     padding: 14px;
@@ -412,6 +445,53 @@
     line-height: 1.2;
   }
 
+  .majority-info {
+    margin-top: 16px;
+    padding: 12px 10px;
+    background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow);
+  }
+
+  .majority-info-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .majority-info-item {
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 9px;
+    background: #fff;
+  }
+
+  .majority-info-item-title {
+    font-size: 12px;
+    font-weight: 700;
+    margin-bottom: 4px;
+  }
+
+  .majority-info-item p {
+    font-size: 11px;
+    color: var(--text-secondary);
+    line-height: 1.35;
+    margin-bottom: 5px;
+  }
+
+  .majority-info-item ul {
+    margin: 0;
+    padding-left: 14px;
+    color: var(--text);
+  }
+
+  .majority-info-item li {
+    font-size: 11px;
+    line-height: 1.35;
+    margin-bottom: 2px;
+  }
+
   .method-note {
     text-align: center;
     font-size: 11px;
@@ -451,8 +531,10 @@
       <div class="total-seats" id="totalSeats">460</div>
     </div>
     <div class="hemicycle-wrap" id="hemicycle"></div>
+    <div class="majority-controls" id="majorityControls"></div>
     <div id="resultsChart"></div>
     <div class="below-threshold-note" id="belowNote" style="display:none"></div>
+    <div class="majority-info" id="majorityInfo"></div>
   </div>
 
   <div class="method-note">
@@ -464,6 +546,14 @@
 const TOTAL_SEATS = 460;
 const PARTY_THRESHOLD = 5;
 const COALITION_THRESHOLD = 8;
+const MAJORITY_OPTIONS = [
+  { key: 'm431', label: '431', seats: 431 },
+  { key: 'simple', label: 'Zwykła', seats: 231 },
+  { key: 'absolute', label: 'Bezwzględna', seats: 231 },
+  { key: 'threeFifths', label: '3/5', seats: 276 },
+  { key: 'twoThirds', label: '2/3', seats: 307 },
+  { key: 'off', label: 'Wyłącz', seats: null },
+];
 
 const PARTY_COLORS = {
   'PiS': '#263672',
@@ -497,6 +587,8 @@ const DEFAULT_COLORS = [
 ];
 
 let colorIndex = 0;
+let selectedMajorityKey = 'm431';
+let lastSortedResults = [];
 
 function getColor(name) {
   if (PARTY_COLORS[name]) return PARTY_COLORS[name];
@@ -537,7 +629,6 @@ function dhondt(validParties, totalSeats) {
 
 function renderHemicycle(sorted) {
   const container = document.getElementById('hemicycle');
-  const majority = Math.floor(TOTAL_SEATS / 2) + 1;
 
   if (sorted.length === 0) { container.innerHTML = ''; return; }
 
@@ -587,20 +678,78 @@ function renderHemicycle(sorted) {
     currentAngle -= sweep;
   }
 
-  const majAngle = Math.PI - (majority / totalSeats) * Math.PI;
-  const mx1 = cx + (innerR - 6) * Math.cos(majAngle);
-  const my1 = cy - (innerR - 6) * Math.sin(majAngle);
-  const mx2 = cx + (outerR + 6) * Math.cos(majAngle);
-  const my2 = cy - (outerR + 6) * Math.sin(majAngle);
-  svg += `<line x1="${mx1}" y1="${my1}" x2="${mx2}" y2="${my2}"
-    stroke="#ffffff" stroke-width="5" opacity="0.9"/>`;
-  svg += `<line x1="${mx1}" y1="${my1}" x2="${mx2}" y2="${my2}"
-    stroke="var(--text)" stroke-width="2.8" stroke-dasharray="6,3" opacity="0.95"/>`;
+  const selectedMajority = MAJORITY_OPTIONS.find(o => o.key === selectedMajorityKey);
+  const majoritySeats = selectedMajority?.seats;
+  if (majoritySeats && majoritySeats > 0 && majoritySeats <= totalSeats) {
+    const majAngle = Math.PI - (majoritySeats / totalSeats) * Math.PI;
+    const mx1 = cx + (innerR - 6) * Math.cos(majAngle);
+    const my1 = cy - (innerR - 6) * Math.sin(majAngle);
+    const mx2 = cx + (outerR + 6) * Math.cos(majAngle);
+    const my2 = cy - (outerR + 6) * Math.sin(majAngle);
+    svg += `<line x1="${mx1}" y1="${my1}" x2="${mx2}" y2="${my2}"
+      stroke="#ffffff" stroke-width="5" opacity="0.9"/>`;
+    svg += `<line x1="${mx1}" y1="${my1}" x2="${mx2}" y2="${my2}"
+      stroke="var(--text)" stroke-width="2.8" stroke-dasharray="6,3" opacity="0.95"/>`;
+  }
 
   svg += `<text x="${cx}" y="${cy - 6}" text-anchor="middle" dominant-baseline="auto"
     fill="var(--text)" font-family="Inter,sans-serif" font-size="16" font-weight="700">${totalSeats}</text>`;
   svg += '</svg>';
   container.innerHTML = svg;
+}
+
+function renderMajorityControls() {
+  const controls = document.getElementById('majorityControls');
+  controls.innerHTML = '';
+
+  MAJORITY_OPTIONS.forEach(option => {
+    const btn = document.createElement('button');
+    btn.className = 'majority-btn' + (selectedMajorityKey === option.key ? ' active' : '');
+    btn.textContent = option.seats ? `${option.label} (${option.seats})` : option.label;
+    btn.addEventListener('click', () => {
+      selectedMajorityKey = option.key;
+      renderMajorityControls();
+      if (lastSortedResults.length > 0) {
+        renderHemicycle(lastSortedResults);
+      }
+    });
+    controls.appendChild(btn);
+  });
+}
+
+function renderMajorityInfo() {
+  const info = document.getElementById('majorityInfo');
+  info.innerHTML = `
+    <div class="below-threshold-title">Rodzaje większości</div>
+    <div class="majority-info-list">
+      <div class="majority-info-item">
+        <div class="majority-info-item-title">1. Większość zwykła</div>
+        <p>Więcej głosów „za” niż „przeciw” (wstrzymujące się nie liczą się), przy kworum co najmniej połowy posłów.</p>
+        <ul>
+          <li>Uchwalanie ustaw zwykłych.</li>
+          <li>Podejmowanie większości uchwał.</li>
+          <li>Wybór niektórych organów pomocniczych (np. Prezesa IPN).</li>
+        </ul>
+      </div>
+      <div class="majority-info-item">
+        <div class="majority-info-item-title">2. Większość bezwzględna</div>
+        <p>Głosów „za” jest więcej niż łącznie „przeciw” i „wstrzymujących się”, przy obecności co najmniej połowy posłów.</p>
+        <ul>
+          <li>Wybór Marszałka Sejmu i Wicemarszałków.</li>
+          <li>Udzielenie wotum zaufania Radzie Ministrów.</li>
+          <li>Wybór członków TK i KRS oraz zgoda na referendum ogólnokrajowe.</li>
+        </ul>
+      </div>
+      <div class="majority-info-item">
+        <div class="majority-info-item-title">3. Większość kwalifikowana</div>
+        <p>Wymagany jest określony ułamek ustawowej liczby 460 posłów.</p>
+        <ul>
+          <li>3/5 (276): m.in. odrzucenie weta Prezydenta RP, konstruktywne wotum nieufności.</li>
+          <li>2/3 (307): m.in. zmiana Konstytucji RP i skrócenie kadencji Sejmu.</li>
+        </ul>
+      </div>
+    </div>
+  `;
 }
 
 function hideResults() {
@@ -652,8 +801,10 @@ function showResults() {
   document.getElementById('totalSeats').textContent = assignedSeats + ' / ' + TOTAL_SEATS;
 
   const sorted = [...seats.entries()].sort((a, b) => b[1] - a[1]);
+  lastSortedResults = sorted;
 
   renderHemicycle(sorted);
+  renderMajorityControls();
 
   const chart = document.getElementById('resultsChart');
   chart.innerHTML = '';
@@ -709,6 +860,8 @@ function showResults() {
   } else {
     belowNote.style.display = 'none';
   }
+
+  renderMajorityInfo();
 
   document.getElementById('resultsSection').style.display = '';
   document.getElementById('showResultsBtn').style.display = 'none';
