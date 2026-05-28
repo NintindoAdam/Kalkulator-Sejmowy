@@ -442,8 +442,10 @@ const COALITION_THRESHOLD = 8;
 
 const PARTY_COLORS = {
   'PiS': '#263672',
+  'KO': '#F58220',
   'Koalicja Obywatelska': '#F58220',
   'Konfederacja': '#1B1464',
+  'KKP': '#8B6914',
   'Konfederacja Korony Polskiej': '#8B6914',
   'Lewica': '#E53935',
   'Razem': '#7B1FA2',
@@ -476,9 +478,9 @@ function getColor(name) {
 
 let parties = [
   { name: 'PiS', pct: 30, coalition: false, color: PARTY_COLORS['PiS'] },
-  { name: 'Koalicja Obywatelska', pct: 25, coalition: false, color: PARTY_COLORS['Koalicja Obywatelska'] },
+  { name: 'KO', pct: 25, coalition: false, color: PARTY_COLORS['KO'] },
   { name: 'Konfederacja', pct: 12, coalition: false, color: PARTY_COLORS['Konfederacja'] },
-  { name: 'Konfederacja Korony Polskiej', pct: 3, coalition: false, color: PARTY_COLORS['Konfederacja Korony Polskiej'] },
+  { name: 'KKP', pct: 3, coalition: false, color: PARTY_COLORS['KKP'] },
   { name: 'Lewica', pct: 6, coalition: false, color: PARTY_COLORS['Lewica'] },
   { name: 'Razem', pct: 3, coalition: false, color: PARTY_COLORS['Razem'] },
   { name: 'PSL', pct: 4, coalition: false, color: PARTY_COLORS['PSL'] },
@@ -713,8 +715,16 @@ function render() {
   list.querySelectorAll('.pct-input').forEach(input => {
     input.addEventListener('input', (e) => {
       const idx = parseInt(e.target.dataset.idx);
-      const val = parseFloat(e.target.value) || 0;
-      parties[idx].pct = Math.min(100, Math.max(0, val));
+      const val = Math.min(100, Math.max(0, parseFloat(e.target.value) || 0));
+      const otherTotal = parties.reduce((sum, party, partyIdx) => (
+        partyIdx === idx ? sum : sum + party.pct
+      ), 0);
+      const maxForCurrent = Math.max(0, 100 - otherTotal);
+      const nextValue = Math.min(val, maxForCurrent);
+      parties[idx].pct = nextValue;
+      if (Math.abs(nextValue - val) > 0.0001) {
+        e.target.value = nextValue;
+      }
       hideResults();
       updateTotal();
     });
