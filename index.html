@@ -2,99 +2,231 @@
 <html lang="pl">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#f5f5f7" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
 <title>Kalkulator Sejmowy</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
   :root {
-    --bg: #fafafa;
-    --card: #ffffff;
-    --text: #1a1a1a;
-    --text-secondary: #6b7280;
-    --border: #e5e7eb;
-    --accent: #2563eb;
-    --accent-light: #dbeafe;
-    --danger: #ef4444;
-    --danger-light: #fef2f2;
-    --success: #10b981;
-    --radius: 12px;
-    --shadow: 0 1px 3px rgba(0,0,0,0.08);
+    color-scheme: light dark;
+
+    /* Surfaces */
+    --bg: #f2f2f7;
+    --bg-grad-1: #eef1f8;
+    --bg-grad-2: #f6f4fb;
+    --card: rgba(255, 255, 255, 0.72);
+    --card-solid: #ffffff;
+    --card-border: rgba(255, 255, 255, 0.6);
+    --hairline: rgba(60, 60, 67, 0.12);
+
+    /* Text */
+    --text: #1d1d1f;
+    --text-secondary: rgba(60, 60, 67, 0.6);
+    --text-tertiary: rgba(60, 60, 67, 0.3);
+
+    /* Accents (Apple system colours) */
+    --accent: #0a84ff;
+    --accent-2: #5e5ce6;
+    --accent-light: rgba(10, 132, 255, 0.12);
+    --danger: #ff3b30;
+    --danger-light: rgba(255, 59, 48, 0.12);
+    --success: #34c759;
+
+    --fill: rgba(118, 118, 128, 0.12);
+    --fill-strong: rgba(118, 118, 128, 0.2);
+
+    --radius: 22px;
+    --radius-sm: 14px;
+    --shadow: 0 10px 30px -12px rgba(28, 28, 40, 0.22), 0 2px 8px -2px rgba(28, 28, 40, 0.08);
+    --shadow-soft: 0 1px 2px rgba(0,0,0,0.04);
+
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
+    --safe-top: env(safe-area-inset-top, 0px);
   }
 
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #000000;
+      --bg-grad-1: #0a0a12;
+      --bg-grad-2: #14101f;
+      --card: rgba(28, 28, 30, 0.66);
+      --card-solid: #1c1c1e;
+      --card-border: rgba(255, 255, 255, 0.08);
+      --hairline: rgba(84, 84, 88, 0.4);
 
-  * { margin: 0; padding: 0; box-sizing: border-box; }
+      --text: #f5f5f7;
+      --text-secondary: rgba(235, 235, 245, 0.6);
+      --text-tertiary: rgba(235, 235, 245, 0.3);
+
+      --accent: #0a84ff;
+      --accent-2: #7d7aff;
+      --accent-light: rgba(10, 132, 255, 0.22);
+      --danger: #ff453a;
+      --danger-light: rgba(255, 69, 58, 0.18);
+      --success: #32d74b;
+
+      --fill: rgba(118, 118, 128, 0.24);
+      --fill-strong: rgba(118, 118, 128, 0.36);
+
+      --shadow: 0 14px 40px -14px rgba(0, 0, 0, 0.7);
+      --shadow-soft: 0 1px 2px rgba(0,0,0,0.3);
+    }
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  html { -webkit-text-size-adjust: 100%; }
 
   body {
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'SF Pro Display', sans-serif;
     background: var(--bg);
     color: var(--text);
     min-height: 100dvh;
     -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    overflow-x: hidden;
+    position: relative;
+  }
+
+  /* Ambient gradient mesh background */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: -20%;
+    z-index: -1;
+    background:
+      radial-gradient(40% 35% at 15% 8%, rgba(94, 92, 230, 0.22), transparent 70%),
+      radial-gradient(45% 40% at 92% 12%, rgba(10, 132, 255, 0.20), transparent 70%),
+      radial-gradient(50% 45% at 80% 95%, rgba(52, 199, 89, 0.12), transparent 70%),
+      radial-gradient(45% 45% at 5% 90%, rgba(255, 59, 48, 0.10), transparent 70%),
+      linear-gradient(180deg, var(--bg-grad-1), var(--bg-grad-2));
+    background-attachment: fixed;
+    animation: drift 22s ease-in-out infinite alternate;
+  }
+
+  @keyframes drift {
+    0%   { transform: translate3d(0,0,0) scale(1); }
+    100% { transform: translate3d(0,-2%,0) scale(1.06); }
   }
 
   .container {
-    max-width: 480px;
+    max-width: 500px;
     margin: 0 auto;
-    padding: 16px;
-    padding-bottom: 100px;
+    padding: calc(var(--safe-top) + 8px) 16px 0;
+    padding-bottom: 180px;
   }
 
+  /* ---------- Hero header ---------- */
   header {
     text-align: center;
-    padding: 24px 0 20px;
+    padding: 36px 0 26px;
+  }
+
+  .hero-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    color: var(--accent);
+    background: var(--accent-light);
+    padding: 7px 13px;
+    border-radius: 100px;
+    margin-bottom: 16px;
+    -webkit-backdrop-filter: blur(20px);
+    backdrop-filter: blur(20px);
+  }
+
+  .hero-badge .dot {
+    width: 7px; height: 7px; border-radius: 50%;
+    background: var(--success);
+    box-shadow: 0 0 0 0 rgba(52,199,89,0.5);
+    animation: pulse 2.4s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0% { box-shadow: 0 0 0 0 rgba(52,199,89,0.45); }
+    70% { box-shadow: 0 0 0 7px rgba(52,199,89,0); }
+    100% { box-shadow: 0 0 0 0 rgba(52,199,89,0); }
   }
 
   header h1 {
-    font-size: 22px;
-    font-weight: 700;
-    letter-spacing: -0.02em;
-    margin-bottom: 4px;
+    font-size: clamp(34px, 11vw, 46px);
+    font-weight: 800;
+    line-height: 1.02;
+    letter-spacing: -0.035em;
+    background: linear-gradient(135deg, var(--text) 30%, var(--accent-2));
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 12px;
   }
 
   header p {
-    font-size: 13px;
+    font-size: 15px;
+    line-height: 1.45;
     color: var(--text-secondary);
+    max-width: 320px;
+    margin: 0 auto;
   }
 
+  /* ---------- Section labels ---------- */
   .section-label {
-    font-size: 11px;
+    font-size: 13px;
     font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
+    letter-spacing: -0.01em;
     color: var(--text-secondary);
-    margin-bottom: 8px;
-    padding-left: 4px;
+    margin: 0 0 12px 6px;
   }
 
+  /* ---------- Party cards ---------- */
   .party-list {
     display: flex;
     flex-direction: column;
-    gap: 8px;
-    margin-bottom: 16px;
+    gap: 12px;
+    margin-bottom: 14px;
   }
 
   .party-card {
+    position: relative;
     background: var(--card);
-    border: 1px solid var(--border);
+    -webkit-backdrop-filter: saturate(180%) blur(30px);
+    backdrop-filter: saturate(180%) blur(30px);
+    border: 1px solid var(--card-border);
     border-radius: var(--radius);
-    padding: 12px;
+    padding: 14px 14px 14px 18px;
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 14px;
     box-shadow: var(--shadow);
-    transition: opacity 0.2s, border-color 0.2s;
+    transition: transform 0.45s cubic-bezier(0.22,1,0.36,1),
+                opacity 0.45s cubic-bezier(0.22,1,0.36,1),
+                filter 0.3s ease;
+    animation: cardIn 0.55s cubic-bezier(0.22,1,0.36,1) both;
+    transform-origin: center;
+  }
+
+  @keyframes cardIn {
+    from { opacity: 0; transform: translateY(10px) scale(0.98); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
   }
 
   .party-card.below-threshold {
-    opacity: 0.45;
+    opacity: 0.5;
+    filter: saturate(0.6);
   }
 
+  /* Coloured spine on the left edge */
   .party-color {
-    width: 6px;
-    height: 40px;
-    border-radius: 3px;
+    width: 5px;
+    align-self: stretch;
+    min-height: 46px;
+    border-radius: 100px;
     flex-shrink: 0;
+    box-shadow: 0 0 14px -2px currentColor;
   }
 
   .party-info {
@@ -102,79 +234,87 @@
     min-width: 0;
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    gap: 9px;
   }
 
   .party-top-row {
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 8px;
   }
 
   .party-name {
-    font-size: 15px;
+    font-size: 17px;
     font-weight: 600;
+    letter-spacing: -0.02em;
     background: none;
     border: none;
     color: var(--text);
-    padding: 0;
+    padding: 2px 0;
     width: 100%;
+    min-width: 0;
     outline: none;
     font-family: inherit;
+    border-bottom: 1.5px solid transparent;
+    transition: border-color 0.2s;
   }
+  .party-name:focus { border-bottom-color: var(--accent); }
 
-  .party-name:focus {
-    border-bottom: 1px solid var(--accent);
-  }
-
+  /* Coalition toggle pill */
   .coalition-badge {
-    font-size: 9px;
+    font-size: 11px;
     font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-    padding: 2px 6px;
-    border-radius: 4px;
-    background: var(--accent-light);
-    color: var(--accent);
+    letter-spacing: -0.01em;
+    padding: 6px 11px;
+    border-radius: 100px;
+    background: var(--fill);
+    color: var(--text-secondary);
     cursor: pointer;
     white-space: nowrap;
     user-select: none;
     flex-shrink: 0;
-    transition: background 0.15s;
+    transition: background 0.25s, color 0.25s, transform 0.15s;
   }
-
-  .coalition-badge:hover {
-    filter: brightness(0.95);
-  }
-
+  .coalition-badge:active { transform: scale(0.92); }
   .coalition-badge.active {
-    background: var(--accent);
+    background: linear-gradient(135deg, var(--accent), var(--accent-2));
     color: #fff;
+    box-shadow: 0 4px 12px -2px var(--accent-light);
   }
 
   .party-bottom-row {
     display: flex;
     align-items: center;
-    gap: 4px;
+    gap: 8px;
   }
 
   .threshold-label {
-    font-size: 10px;
-    color: var(--text-secondary);
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text-tertiary);
     white-space: nowrap;
   }
 
   .pct-input-wrap {
     display: flex;
-    align-items: center;
-    gap: 2px;
+    align-items: baseline;
+    gap: 1px;
     margin-left: auto;
+    background: var(--fill);
+    padding: 4px 12px;
+    border-radius: 12px;
+    transition: box-shadow 0.2s, background 0.2s;
+  }
+  .pct-input-wrap:focus-within {
+    background: var(--accent-light);
+    box-shadow: inset 0 0 0 1.5px var(--accent);
   }
 
   .pct-input {
-    width: 52px;
-    font-size: 18px;
+    width: 46px;
+    font-size: 21px;
     font-weight: 700;
+    letter-spacing: -0.03em;
     font-family: inherit;
     text-align: right;
     border: none;
@@ -183,221 +323,263 @@
     outline: none;
     padding: 0;
     -moz-appearance: textfield;
+    font-variant-numeric: tabular-nums;
   }
-
   .pct-input::-webkit-inner-spin-button,
-  .pct-input::-webkit-outer-spin-button {
-    -webkit-appearance: none;
-  }
-
-  .pct-input:focus {
-    color: var(--accent);
-  }
+  .pct-input::-webkit-outer-spin-button { -webkit-appearance: none; }
+  .pct-input:focus { color: var(--accent); }
 
   .pct-symbol {
-    font-size: 14px;
+    font-size: 15px;
     font-weight: 600;
     color: var(--text-secondary);
   }
 
   .remove-btn {
-    width: 28px;
-    height: 28px;
+    width: 30px;
+    height: 30px;
     border-radius: 50%;
     border: none;
-    background: var(--danger-light);
-    color: var(--danger);
-    font-size: 16px;
+    background: var(--fill);
+    color: var(--text-secondary);
+    font-size: 17px;
+    line-height: 1;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
-    transition: background 0.15s;
+    transition: background 0.2s, color 0.2s, transform 0.15s;
   }
+  .remove-btn:active { transform: scale(0.85); }
+  .remove-btn:hover { background: var(--danger); color: #fff; }
 
-  .remove-btn:hover {
-    background: var(--danger);
-    color: #fff;
-  }
-
+  /* ---------- Add button ---------- */
   .add-btn {
     width: 100%;
-    padding: 12px;
-    border: 2px dashed var(--border);
+    padding: 16px;
+    border: 1.5px dashed var(--hairline);
     border-radius: var(--radius);
-    background: none;
-    color: var(--text-secondary);
-    font-size: 14px;
-    font-weight: 500;
+    background: var(--card);
+    -webkit-backdrop-filter: blur(20px);
+    backdrop-filter: blur(20px);
+    color: var(--accent);
+    font-size: 15px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
     font-family: inherit;
     cursor: pointer;
-    transition: border-color 0.15s, color 0.15s;
+    transition: border-color 0.2s, background 0.2s, transform 0.15s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
   }
+  .add-btn:active { transform: scale(0.985); }
+  .add-btn:hover { border-color: var(--accent); background: var(--accent-light); }
+  .add-btn svg { width: 18px; height: 18px; }
 
-  .add-btn:hover {
-    border-color: var(--accent);
-    color: var(--accent);
+  /* ---------- Sticky bottom action bar ---------- */
+  .action-dock {
+    position: fixed;
+    left: 0; right: 0; bottom: 0;
+    z-index: 50;
+    padding: 14px 16px calc(14px + var(--safe-bottom));
+    background: linear-gradient(180deg, transparent, var(--bg) 42%);
+    pointer-events: none;
+  }
+  .action-dock-inner {
+    max-width: 500px;
+    margin: 0 auto;
+    background: var(--card);
+    -webkit-backdrop-filter: saturate(180%) blur(30px);
+    backdrop-filter: saturate(180%) blur(30px);
+    border: 1px solid var(--card-border);
+    border-radius: 26px;
+    box-shadow: var(--shadow);
+    padding: 12px;
+    pointer-events: auto;
   }
 
   .total-bar {
-    margin: 16px 0;
-    padding: 10px 14px;
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
     display: flex;
     justify-content: space-between;
     align-items: center;
-    font-size: 13px;
-    box-shadow: var(--shadow);
+    padding: 4px 10px 12px;
   }
-
-  .total-bar .label { color: var(--text-secondary); }
-
+  .total-bar .label {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-secondary);
+  }
   .total-bar .value {
     font-weight: 700;
-    font-size: 15px;
+    font-size: 19px;
+    letter-spacing: -0.02em;
+    font-variant-numeric: tabular-nums;
+    color: var(--text);
+    transition: color 0.25s;
   }
-
   .total-bar .value.over { color: var(--danger); }
 
+  .show-results-btn {
+    width: 100%;
+    padding: 16px;
+    border: none;
+    border-radius: 16px;
+    background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    color: #fff;
+    font-size: 17px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    font-family: inherit;
+    cursor: pointer;
+    box-shadow: 0 8px 20px -6px var(--accent-light);
+    transition: transform 0.18s cubic-bezier(0.22,1,0.36,1), filter 0.2s, opacity 0.2s;
+  }
+  .show-results-btn:active { transform: scale(0.97); }
+  .show-results-btn:disabled {
+    background: var(--fill-strong);
+    color: var(--text-tertiary);
+    cursor: not-allowed;
+    box-shadow: none;
+  }
+
+  /* ---------- Results ---------- */
   .results-section {
-    margin-top: 24px;
+    margin-top: 30px;
+    animation: cardIn 0.6s cubic-bezier(0.22,1,0.36,1) both;
+  }
+
+  .results-card {
+    background: var(--card);
+    -webkit-backdrop-filter: saturate(180%) blur(30px);
+    backdrop-filter: saturate(180%) blur(30px);
+    border: 1px solid var(--card-border);
+    border-radius: 26px;
+    box-shadow: var(--shadow);
+    padding: 20px 18px;
   }
 
   .results-header {
     display: flex;
     justify-content: space-between;
     align-items: baseline;
-    margin-bottom: 12px;
-    padding: 0 4px;
+    margin-bottom: 6px;
+    padding: 0 2px;
   }
-
+  .results-header .section-label { margin: 0; }
   .results-header .total-seats {
     font-size: 13px;
+    font-weight: 600;
     color: var(--text-secondary);
+    font-variant-numeric: tabular-nums;
   }
+
+  .hemicycle-wrap {
+    margin: 10px 0 22px;
+    text-align: center;
+  }
+  .hemicycle-wrap svg { width: 100%; max-width: 380px; height: auto; }
 
   .result-row {
     display: flex;
     align-items: center;
-    gap: 10px;
-    margin-bottom: 10px;
-    padding: 0 4px;
+    gap: 12px;
+    margin-bottom: 12px;
+    padding: 0 2px;
   }
+  .result-row:last-child { margin-bottom: 0; }
 
   .result-name {
-    font-size: 12px;
-    font-weight: 500;
-    width: 80px;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    width: 64px;
     flex-shrink: 0;
-    line-height: 1.2;
+    line-height: 1.15;
     word-break: break-word;
   }
 
   .result-bar-wrap {
     flex: 1;
-    height: 28px;
-    background: var(--border);
-    border-radius: 6px;
+    height: 32px;
+    background: var(--fill);
+    border-radius: 10px;
     overflow: hidden;
     position: relative;
   }
-
   .result-bar {
     height: 100%;
-    border-radius: 6px;
-    transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    border-radius: 10px;
+    transition: width 0.7s cubic-bezier(0.22,1,0.36,1);
     min-width: 0;
     display: flex;
     align-items: center;
-    padding-left: 8px;
+    padding-left: 10px;
+    position: relative;
+    overflow: hidden;
   }
-
+  /* subtle sheen on bars */
+  .result-bar::after {
+    content: '';
+    position: absolute; inset: 0;
+    background: linear-gradient(180deg, rgba(255,255,255,0.22), rgba(255,255,255,0) 55%);
+    pointer-events: none;
+  }
   .result-bar-label {
-    font-size: 12px;
+    font-size: 13px;
     font-weight: 700;
     color: #fff;
     white-space: nowrap;
-    text-shadow: 0 1px 2px rgba(0,0,0,0.2);
+    text-shadow: 0 1px 3px rgba(0,0,0,0.25);
+    position: relative;
+    z-index: 1;
+    font-variant-numeric: tabular-nums;
   }
 
   .result-seats {
-    font-size: 15px;
+    font-size: 17px;
     font-weight: 700;
+    letter-spacing: -0.02em;
     width: 40px;
     text-align: right;
     flex-shrink: 0;
+    font-variant-numeric: tabular-nums;
   }
-
   .result-pct {
-    font-size: 11px;
+    font-size: 12px;
+    font-weight: 500;
     color: var(--text-secondary);
-    width: 38px;
+    width: 40px;
     text-align: right;
     flex-shrink: 0;
-  }
-
-  .hemicycle-wrap {
-    margin: 16px 0 20px;
-    text-align: center;
-  }
-
-  .hemicycle-wrap svg {
-    width: 100%;
-    max-width: 400px;
-    height: auto;
-  }
-
-  .show-results-btn {
-    width: 100%;
-    padding: 14px;
-    margin-top: 16px;
-    border: none;
-    border-radius: var(--radius);
-    background: var(--accent);
-    color: #fff;
-    font-size: 15px;
-    font-weight: 600;
-    font-family: inherit;
-    cursor: pointer;
-    transition: background 0.15s;
-  }
-
-  .show-results-btn:hover {
-    filter: brightness(0.9);
-  }
-
-  .show-results-btn:disabled {
-    background: var(--border);
-    color: var(--text-secondary);
-    cursor: not-allowed;
-    filter: none;
+    font-variant-numeric: tabular-nums;
   }
 
   .below-threshold-note {
     text-align: center;
-    font-size: 12px;
+    font-size: 13px;
+    line-height: 1.5;
     color: var(--text-secondary);
-    margin-top: 16px;
-    padding: 8px;
-    background: var(--card);
-    border-radius: var(--radius);
-    border: 1px solid var(--border);
+    margin-top: 18px;
+    padding: 14px 16px;
+    background: var(--fill);
+    border-radius: var(--radius-sm);
   }
 
   .method-note {
     text-align: center;
-    font-size: 11px;
-    color: var(--text-secondary);
-    margin-top: 20px;
-    padding-bottom: 20px;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text-tertiary);
+    margin-top: 26px;
+    line-height: 1.6;
   }
 
   @media (prefers-reduced-motion: reduce) {
-    .result-bar { transition: none; }
-    .party-card { transition: none; }
+    *, body::before { animation: none !important; }
+    .result-bar, .party-card, .show-results-btn { transition: none !important; }
   }
 </style>
 </head>
@@ -405,33 +587,43 @@
 
 <div class="container">
   <header>
-    <h1>Kalkulator Sejmowy</h1>
-    <p>Prognoza podziału 460 mandatów metodą D'Hondta</p>
+    <span class="hero-badge"><span class="dot"></span>Metoda D'Hondta · 460 mandatów</span>
+    <h1>Kalkulator<br>Sejmowy</h1>
+    <p>Wpisz poparcie w procentach i zobacz prognozowany podział mandatów w Sejmie.</p>
   </header>
 
-  <div class="section-label">Partie</div>
+  <div class="section-label">Partie i koalicje</div>
   <div class="party-list" id="partyList"></div>
-  <button class="add-btn" id="addPartyBtn">+ Dodaj partie</button>
-
-  <div class="total-bar">
-    <span class="label">Suma głosów</span>
-    <span class="value" id="totalPct">0%</span>
-  </div>
-
-  <button class="show-results-btn" id="showResultsBtn">Pokaż wyniki</button>
+  <button class="add-btn" id="addPartyBtn">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+    Dodaj partię
+  </button>
 
   <div class="results-section" id="resultsSection" style="display:none">
-    <div class="results-header">
-      <div class="section-label" style="margin-bottom:0">Wyniki</div>
-      <div class="total-seats" id="totalSeats">460 mandatów</div>
+    <div class="results-card">
+      <div class="results-header">
+        <div class="section-label">Wyniki</div>
+        <div class="total-seats" id="totalSeats">460 mandatów</div>
+      </div>
+      <div class="hemicycle-wrap" id="hemicycle"></div>
+      <div id="resultsChart"></div>
+      <div class="below-threshold-note" id="belowNote" style="display:none"></div>
     </div>
-    <div class="hemicycle-wrap" id="hemicycle"></div>
-    <div id="resultsChart"></div>
-    <div class="below-threshold-note" id="belowNote" style="display:none"></div>
   </div>
 
   <div class="method-note">
-    Metoda D'Hondta &middot; Prog 5% (partie) / 8% (koalicje)
+    Metoda D'Hondta · Próg 5% (partie) / 8% (koalicje)
+  </div>
+</div>
+
+<!-- Sticky action dock -->
+<div class="action-dock">
+  <div class="action-dock-inner">
+    <div class="total-bar">
+      <span class="label">Suma poparcia</span>
+      <span class="value" id="totalPct">0%</span>
+    </div>
+    <button class="show-results-btn" id="showResultsBtn">Pokaż wyniki</button>
   </div>
 </div>
 
@@ -567,12 +759,32 @@ function renderHemicycle(sorted) {
     stroke="var(--text)" stroke-width="2" stroke-dasharray="4,3" opacity="0.4"/>`;
 
   svg += `<text x="${cx}" y="${cy - 6}" text-anchor="middle" dominant-baseline="auto"
-    fill="var(--text)" font-family="Inter,sans-serif" font-size="16" font-weight="700">${totalSeats}</text>`;
-  svg += `<text x="${cx}" y="${cy + 7}" text-anchor="middle" dominant-baseline="auto"
-    fill="var(--text-secondary)" font-family="Inter,sans-serif" font-size="9">mandatów</text>`;
+    fill="var(--text)" font-family="-apple-system,Inter,sans-serif" font-size="17" font-weight="800" letter-spacing="-0.5">${totalSeats}</text>`;
+  svg += `<text x="${cx}" y="${cy + 8}" text-anchor="middle" dominant-baseline="auto"
+    fill="var(--text-secondary)" font-family="-apple-system,Inter,sans-serif" font-size="9" font-weight="600">mandatów</text>`;
 
   svg += '</svg>';
   container.innerHTML = svg;
+}
+
+const REDUCED_MOTION = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+// Smoothly counts an element's text from `start` to `end`, formatting each frame.
+function animateCount(el, start, end, format, duration = 900) {
+  if (!el) return;
+  if (REDUCED_MOTION || start === end) { el.textContent = format(end); return; }
+
+  const t0 = performance.now();
+  const easeOut = t => 1 - Math.pow(1 - t, 3);
+
+  function frame(now) {
+    const t = Math.min((now - t0) / duration, 1);
+    const val = Math.round(start + (end - start) * easeOut(t));
+    el.textContent = format(val);
+    if (t < 1) requestAnimationFrame(frame);
+    else el.textContent = format(end);
+  }
+  requestAnimationFrame(frame);
 }
 
 function hideResults() {
@@ -621,8 +833,6 @@ function showResults() {
   const seats = validParties.length > 0 ? dhondt(validParties, TOTAL_SEATS) : new Map();
   const assignedSeats = Array.from(seats.values()).reduce((a, b) => a + b, 0);
 
-  document.getElementById('totalSeats').textContent = assignedSeats + ' / ' + TOTAL_SEATS + ' mandatów';
-
   const sorted = [...seats.entries()].sort((a, b) => b[1] - a[1]);
 
   renderHemicycle(sorted);
@@ -631,6 +841,7 @@ function showResults() {
   chart.innerHTML = '';
 
   const maxSeats = Math.max(...Array.from(seats.values()), 1);
+  const animatedEls = [];
 
   for (const [name, s] of sorted) {
     const party = parties.find(p => p.name === name);
@@ -647,15 +858,31 @@ function showResults() {
     row.innerHTML = `
       <div class="result-name" title="${name}">${sn}</div>
       <div class="result-bar-wrap">
-        <div class="result-bar" style="width:${barWidth}%;background:${party?.color || '#888'}">
-          ${s > 15 ? `<span class="result-bar-label">${s}</span>` : ''}
+        <div class="result-bar" style="width:0%;background:${party?.color || '#888'}">
+          ${s > 15 ? `<span class="result-bar-label">0</span>` : ''}
         </div>
       </div>
-      <div class="result-seats">${s}</div>
+      <div class="result-seats">0</div>
       <div class="result-pct">${pctOfTotal}%</div>
     `;
     chart.appendChild(row);
+
+    const bar = row.querySelector('.result-bar');
+    const seatEl = row.querySelector('.result-seats');
+    const labelEl = row.querySelector('.result-bar-label');
+    animatedEls.push({ bar, seatEl, labelEl, target: s, barWidth });
   }
+
+  // Animate the totalSeats header counter + each row's bar fill and seat count.
+  const totalSeatsEl = document.getElementById('totalSeats');
+  animateCount(totalSeatsEl, 0, assignedSeats, v => v + ' / ' + TOTAL_SEATS + ' mandatów');
+  requestAnimationFrame(() => {
+    animatedEls.forEach(({ bar, seatEl, labelEl, target, barWidth }) => {
+      bar.style.width = barWidth + '%';
+      animateCount(seatEl, 0, target, v => '' + v);
+      if (labelEl) animateCount(labelEl, 0, target, v => '' + v);
+    });
+  });
 
   const belowNote = document.getElementById('belowNote');
   if (belowParties.length > 0) {
@@ -671,7 +898,7 @@ function showResults() {
 
   document.getElementById('resultsSection').style.display = '';
   document.getElementById('showResultsBtn').style.display = 'none';
-  document.getElementById('resultsSection').scrollIntoView({ behavior: 'smooth' });
+  document.getElementById('resultsSection').scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
 function render() {
@@ -681,6 +908,7 @@ function render() {
   parties.forEach((party, i) => {
     const card = document.createElement('div');
     card.className = 'party-card';
+    card.style.animationDelay = (i * 0.04) + 's';
 
     const threshold = party.coalition ? COALITION_THRESHOLD : PARTY_THRESHOLD;
     if (party.pct > 0 && party.pct < threshold) {
@@ -688,23 +916,23 @@ function render() {
     }
 
     card.innerHTML = `
-      <div class="party-color" style="background:${party.color}"></div>
+      <div class="party-color" style="background:${party.color};color:${party.color}"></div>
       <div class="party-info">
         <div class="party-top-row">
           <input class="party-name" type="text" value="${party.name}" data-idx="${i}" />
-          <div class="coalition-badge ${party.coalition ? 'active' : ''}" data-idx="${i}" title="Koalicja = prog 8%">
+          <div class="coalition-badge ${party.coalition ? 'active' : ''}" data-idx="${i}" title="Koalicja = próg 8%">
             ${party.coalition ? 'Koalicja' : 'Partia'}
           </div>
         </div>
         <div class="party-bottom-row">
-          <span class="threshold-label">prog ${threshold}%</span>
+          <span class="threshold-label">próg ${threshold}%</span>
           <div class="pct-input-wrap">
             <input class="pct-input" type="number" inputmode="decimal" min="0" max="100" step="0.1" value="${party.pct}" data-idx="${i}" />
             <span class="pct-symbol">%</span>
           </div>
         </div>
       </div>
-      <button class="remove-btn" data-idx="${i}" title="Usun">&times;</button>
+      <button class="remove-btn" data-idx="${i}" title="Usuń">&times;</button>
     `;
 
     list.appendChild(card);
