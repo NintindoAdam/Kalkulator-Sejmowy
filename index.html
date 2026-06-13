@@ -767,6 +767,26 @@ function renderHemicycle(sorted) {
   container.innerHTML = svg;
 }
 
+const REDUCED_MOTION = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+// Smoothly counts an element's text from `start` to `end`, formatting each frame.
+function animateCount(el, start, end, format, duration = 900) {
+  if (!el) return;
+  if (REDUCED_MOTION || start === end) { el.textContent = format(end); return; }
+
+  const t0 = performance.now();
+  const easeOut = t => 1 - Math.pow(1 - t, 3);
+
+  function frame(now) {
+    const t = Math.min((now - t0) / duration, 1);
+    const val = Math.round(start + (end - start) * easeOut(t));
+    el.textContent = format(val);
+    if (t < 1) requestAnimationFrame(frame);
+    else el.textContent = format(end);
+  }
+  requestAnimationFrame(frame);
+}
+
 function hideResults() {
   document.getElementById('resultsSection').style.display = 'none';
   document.getElementById('showResultsBtn').style.display = '';
@@ -813,8 +833,6 @@ function showResults() {
   const seats = validParties.length > 0 ? dhondt(validParties, TOTAL_SEATS) : new Map();
   const assignedSeats = Array.from(seats.values()).reduce((a, b) => a + b, 0);
 
-  document.getElementById('totalSeats').textContent = assignedSeats + ' / ' + TOTAL_SEATS + ' mandatów';
-
   const sorted = [...seats.entries()].sort((a, b) => b[1] - a[1]);
 
   renderHemicycle(sorted);
@@ -823,6 +841,7 @@ function showResults() {
   chart.innerHTML = '';
 
   const maxSeats = Math.max(...Array.from(seats.values()), 1);
+  const animatedEls = [];
 
   for (const [name, s] of sorted) {
     const party = parties.find(p => p.name === name);
@@ -839,15 +858,31 @@ function showResults() {
     row.innerHTML = `
       <div class="result-name" title="${name}">${sn}</div>
       <div class="result-bar-wrap">
-        <div class="result-bar" style="width:${barWidth}%;background:${party?.color || '#888'}">
-          ${s > 15 ? `<span class="result-bar-label">${s}</span>` : ''}
+        <div class="result-bar" style="width:0%;background:${party?.color || '#888'}">
+          ${s > 15 ? `<span class="result-bar-label">0</span>` : ''}
         </div>
       </div>
-      <div class="result-seats">${s}</div>
+      <div class="result-seats">0</div>
       <div class="result-pct">${pctOfTotal}%</div>
     `;
     chart.appendChild(row);
+
+    const bar = row.querySelector('.result-bar');
+    const seatEl = row.querySelector('.result-seats');
+    const labelEl = row.querySelector('.result-bar-label');
+    animatedEls.push({ bar, seatEl, labelEl, target: s, barWidth });
   }
+
+  // Animate the totalSeats header counter + each row's bar fill and seat count.
+  const totalSeatsEl = document.getElementById('totalSeats');
+  animateCount(totalSeatsEl, 0, assignedSeats, v => v + ' / ' + TOTAL_SEATS + ' mandatów');
+  requestAnimationFrame(() => {
+    animatedEls.forEach(({ bar, seatEl, labelEl, target, barWidth }) => {
+      bar.style.width = barWidth + '%';
+      animateCount(seatEl, 0, target, v => '' + v);
+      if (labelEl) animateCount(labelEl, 0, target, v => '' + v);
+    });
+  });
 
   const belowNote = document.getElementById('belowNote');
   if (belowParties.length > 0) {
