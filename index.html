@@ -495,10 +495,13 @@
     font-size: 13px;
     font-weight: 600;
     letter-spacing: -0.01em;
-    width: 64px;
+    width: 78px;
     flex-shrink: 0;
-    line-height: 1.15;
-    word-break: break-word;
+    line-height: 1.2;
+    /* wrap only between whole words, never mid-word */
+    word-break: normal;
+    overflow-wrap: normal;
+    hyphens: none;
   }
 
   .result-bar-wrap {
@@ -646,6 +649,7 @@ const PARTY_COLORS = {
 
 const SHORT_NAMES = {
   'Koalicja Obywatelska': 'KO',
+  'Konfederacja': 'Konfa',
   'Konfederacja Korony Polskiej': 'KKP',
   'Trzecia Droga': 'TD',
 };
@@ -711,7 +715,7 @@ function renderHemicycle(sorted) {
   const cx = W / 2, cy = H - 5;
   const outerR = 195, innerR = 95, gap = 0.008;
 
-  let svg = `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">`;
+  let svg = `<svg viewBox="0 -22 ${W} ${H + 22}" xmlns="http://www.w3.org/2000/svg">`;
 
   let currentAngle = Math.PI;
 
@@ -750,13 +754,18 @@ function renderHemicycle(sorted) {
     currentAngle -= sweep;
   }
 
+  // Majority threshold marker — the line splitting the hemicycle at 231 of 460.
   const majAngle = Math.PI - (majority / totalSeats) * Math.PI;
-  const mx1 = cx + (innerR - 6) * Math.cos(majAngle);
-  const my1 = cy - (innerR - 6) * Math.sin(majAngle);
-  const mx2 = cx + (outerR + 6) * Math.cos(majAngle);
-  const my2 = cy - (outerR + 6) * Math.sin(majAngle);
+  const mx1 = cx + (innerR - 8) * Math.cos(majAngle);
+  const my1 = cy - (innerR - 8) * Math.sin(majAngle);
+  const mx2 = cx + (outerR + 8) * Math.cos(majAngle);
+  const my2 = cy - (outerR + 8) * Math.sin(majAngle);
   svg += `<line x1="${mx1}" y1="${my1}" x2="${mx2}" y2="${my2}"
-    stroke="var(--text)" stroke-width="2" stroke-dasharray="4,3" opacity="0.4"/>`;
+    stroke="var(--text)" stroke-width="2.2" stroke-dasharray="5,4" stroke-linecap="round" opacity="0.55"/>`;
+  const lx = cx + (outerR + 22) * Math.cos(majAngle);
+  const ly = cy - (outerR + 22) * Math.sin(majAngle);
+  svg += `<text x="${lx}" y="${ly}" text-anchor="middle" dominant-baseline="middle"
+    fill="var(--text-secondary)" font-family="-apple-system,Inter,sans-serif" font-size="10.5" font-weight="700">większość ${majority}</text>`;
 
   svg += `<text x="${cx}" y="${cy - 6}" text-anchor="middle" dominant-baseline="auto"
     fill="var(--text)" font-family="-apple-system,Inter,sans-serif" font-size="17" font-weight="800" letter-spacing="-0.5">${totalSeats}</text>`;
