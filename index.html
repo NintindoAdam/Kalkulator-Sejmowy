@@ -486,10 +486,61 @@
     display: flex;
     align-items: center;
     gap: 12px;
-    margin-bottom: 12px;
-    padding: 0 2px;
+    margin-bottom: 6px;
+    padding: 6px 8px;
+    border-radius: 14px;
+    cursor: pointer;
+    user-select: none;
+    box-shadow: inset 0 0 0 0 transparent;
+    transition: background 0.22s, opacity 0.22s, box-shadow 0.22s, transform 0.12s;
   }
   .result-row:last-child { margin-bottom: 0; }
+  .result-row:active { transform: scale(0.99); }
+  .result-row.selected {
+    background: var(--accent-light);
+    box-shadow: inset 0 0 0 1.5px var(--accent);
+  }
+  .result-row.selected .result-name { color: var(--accent); }
+  .result-row.dimmed { opacity: 0.45; }
+
+  /* Coalition builder */
+  .coalition-hint {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text-tertiary);
+    text-align: center;
+    margin: 2px 0 14px;
+  }
+  .coalition-status {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 13px 16px;
+    border-radius: 16px;
+    margin: 0 0 16px;
+    background: var(--fill);
+    box-shadow: inset 0 0 0 0 transparent;
+    transition: background 0.3s, box-shadow 0.3s;
+    animation: cardIn 0.35s cubic-bezier(0.22,1,0.36,1) both;
+  }
+  .coalition-status .cs-left { display: flex; align-items: baseline; gap: 6px; }
+  .coalition-status .cs-count {
+    font-size: 24px;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    color: var(--accent);
+    font-variant-numeric: tabular-nums;
+    transition: color 0.3s;
+  }
+  .coalition-status .cs-sep { font-size: 13px; font-weight: 600; color: var(--text-secondary); }
+  .coalition-status .cs-msg { font-size: 13px; font-weight: 700; text-align: right; color: var(--text-secondary); }
+  .coalition-status.reached {
+    background: rgba(52,199,89,0.14);
+    box-shadow: inset 0 0 0 1.5px rgba(52,199,89,0.4);
+  }
+  .coalition-status.reached .cs-count,
+  .coalition-status.reached .cs-msg { color: var(--success); }
 
   .result-name {
     font-size: 13px;
@@ -609,6 +660,8 @@
         <div class="total-seats" id="totalSeats">460 mandatów</div>
       </div>
       <div class="hemicycle-wrap" id="hemicycle"></div>
+      <div class="coalition-status" id="coalitionStatus" style="display:none"></div>
+      <div class="coalition-hint" id="coalitionHint">Dotknij partie, aby zbudować koalicję</div>
       <div id="resultsChart"></div>
       <div class="below-threshold-note" id="belowNote" style="display:none"></div>
     </div>
@@ -634,6 +687,12 @@
 const TOTAL_SEATS = 460;
 const PARTY_THRESHOLD = 5;
 const COALITION_THRESHOLD = 8;
+const MAJORITY = Math.floor(TOTAL_SEATS / 2) + 1; // 231
+
+// Interactive coalition builder state (set of party names tapped in results).
+let coalition = new Set();
+let lastSorted = [];
+let lastSeats = new Map();
 
 const PARTY_COLORS = {
   'PiS': '#263672',
@@ -704,7 +763,7 @@ function dhondt(validParties, totalSeats) {
 
 function renderHemicycle(sorted) {
   const container = document.getElementById('hemicycle');
-  const majority = Math.floor(TOTAL_SEATS / 2) + 1;
+  const majority = MAJORITY;
 
   if (sorted.length === 0) { container.innerHTML = ''; return; }
 
@@ -749,7 +808,8 @@ function renderHemicycle(sorted) {
       'Z'
     ].join(' ');
 
-    svg += `<path d="${d}" fill="${color}"/>`;
+    const op = coalition.size === 0 || coalition.has(name) ? 1 : 0.28;
+    svg += `<path d="${d}" fill="${color}" fill-opacity="${op}" style="transition:fill-opacity .3s"/>`;
 
     currentAngle -= sweep;
   }
@@ -844,6 +904,11 @@ function showResults() {
 
   const sorted = [...seats.entries()].sort((a, b) => b[1] - a[1]);
 
+  // Reset the coalition builder for this fresh result set.
+  coalition = new Set();
+  lastSorted = sorted;
+  lastSeats = seats;
+
   renderHemicycle(sorted);
 
   const chart = document.getElementById('resultsChart');
@@ -860,12 +925,16 @@ function showResults() {
 
     const row = document.createElement('div');
     row.className = 'result-row';
+    row.dataset.name = name;
+    row.setAttribute('role', 'button');
+    row.setAttribute('aria-pressed', 'false');
+    row.title = 'Dotknij, aby dodać do koalicji';
 
     const barWidth = maxSeats > 0 ? (s / maxSeats) * 100 : 0;
     const sn = shortName(name);
 
     row.innerHTML = `
-      <div class="result-name" title="${name}">${sn}</div>
+      <div class="result-name">${sn}</div>
       <div class="result-bar-wrap">
         <div class="result-bar" style="width:0%;background:${party?.color || '#888'}">
           ${s > 15 ? `<span class="result-bar-label">0</span>` : ''}
@@ -874,6 +943,7 @@ function showResults() {
       <div class="result-seats">0</div>
       <div class="result-pct">${pctOfTotal}%</div>
     `;
+    row.addEventListener('click', () => toggleCoalition(name));
     chart.appendChild(row);
 
     const bar = row.querySelector('.result-bar');
@@ -905,9 +975,61 @@ function showResults() {
     belowNote.style.display = 'none';
   }
 
+  updateCoalition();
+
   document.getElementById('resultsSection').style.display = '';
   document.getElementById('showResultsBtn').style.display = 'none';
   document.getElementById('resultsSection').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function toggleCoalition(name) {
+  if (coalition.has(name)) coalition.delete(name);
+  else coalition.add(name);
+  renderHemicycle(lastSorted);
+  updateCoalition();
+}
+
+function updateCoalition() {
+  const statusEl = document.getElementById('coalitionStatus');
+  const hintEl = document.getElementById('coalitionHint');
+
+  // Reflect selection on each row.
+  document.querySelectorAll('.result-row').forEach(row => {
+    const sel = coalition.has(row.dataset.name);
+    row.classList.toggle('selected', sel);
+    row.classList.toggle('dimmed', coalition.size > 0 && !sel);
+    row.setAttribute('aria-pressed', sel ? 'true' : 'false');
+  });
+
+  if (coalition.size === 0) {
+    const hasRows = document.querySelectorAll('.result-row').length > 0;
+    statusEl.style.display = 'none';
+    hintEl.style.display = hasRows ? '' : 'none';
+    return;
+  }
+
+  let sum = 0;
+  coalition.forEach(n => { sum += (lastSeats.get(n) || 0); });
+  const reached = sum >= MAJORITY;
+  const diff = Math.abs(sum - MAJORITY);
+
+  let msg;
+  if (reached) {
+    msg = sum === MAJORITY ? '✓ Większość osiągnięta' : `✓ Większość +${diff}`;
+  } else {
+    msg = `Brakuje ${diff} mandatów`;
+  }
+
+  statusEl.className = 'coalition-status' + (reached ? ' reached' : '');
+  statusEl.innerHTML = `
+    <div class="cs-left">
+      <span class="cs-count">${sum}</span>
+      <span class="cs-sep">/ ${MAJORITY} do większości</span>
+    </div>
+    <div class="cs-msg">${msg}</div>
+  `;
+  statusEl.style.display = '';
+  hintEl.style.display = 'none';
 }
 
 function render() {
